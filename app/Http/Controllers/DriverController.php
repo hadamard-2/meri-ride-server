@@ -9,15 +9,15 @@ use Illuminate\Support\Facades\Validator;
 
 class DriverController extends Controller
 {
-    public function validatePhoneNum(Request $request)
+    public function checkDriverExists(Request $request)
     {
         $rules = [
-            'phone_num' => 'required|digits:9',
+            'phone_number' => 'required|digits:10',
         ];
 
         $messages = [
-            'phone_num.required' => 'The phone number is required.',
-            'phone_num.digits' => 'The phone number must be exactly 9 digits long.',
+            'phone_number.required' => 'Phone number is required.',
+            'phone_number.digits' => 'Phone number must be exactly 10 digits long.',
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -25,39 +25,17 @@ class DriverController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
-                'errors' => $validator->errors(),
-            ], 422); // HTTP 422 Unprocessable Entity
+                'message' => $validator->errors()->first(),
+            ], 400); // HTTP 400 Bad Request
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Phone number is valid.',
-            'data' => [
-                'phone_num' => $request->phone_num,
-            ],
-        ], 200);
-    }
+        $driver = Driver::where('phone_number', $request->input('phone_number'))->first();
 
-    public function checkDriverExists(Request $request)
-    {
-        $validationResult = $this->validatePhoneNum($request);
-
-        if (is_array($validationResult) && isset($validationResult['status']) && $validationResult['status'] === 'error') {
-            return response()->json($validationResult, 422);
-        }
-
-        $phoneNum = $validationResult; // The validated phone number
-        $driver = Driver::where('phone_num', $phoneNum)->first();
-
-        // Return response based on whether the driver exists
         if ($driver) {
             return response()->json([
                 'status' => 'success',
                 'message' => 'Driver found.',
-                'data' => [
-                    'driver' => $driver,
-                ],
-            ], 200);
+            ], 200); // HTTP 200 OK
         } else {
             return response()->json([
                 'status' => 'error',
@@ -66,7 +44,7 @@ class DriverController extends Controller
         }
     }
 
-    public function register(Request $request)
+    public function registerDriver(Request $request)
     {
         // Validate the request
         $validator = Validator::make($request->all(), [
@@ -140,13 +118,13 @@ class DriverController extends Controller
     public function loginDriver(Request $request)
     {
         $rules = [
-            'phone_number' => 'required|digits:9',
+            'phone_number' => 'required|digits:10',
             'password' => 'required|string|min:6',
         ];
 
         $messages = [
             'phone_number.required' => 'The phone number is required.',
-            'phone_number.digits' => 'The phone number must be exactly 9 digits long.',
+            'phone_number.digits' => 'The phone number must be exactly 10 digits long.',
             'password.required' => 'The password is required.',
             'password.min' => 'The password must be at least 6 characters.',
         ];
@@ -177,8 +155,8 @@ class DriverController extends Controller
             'message' => 'Driver logged in successfully.',
             'data' => [
                 'driver' => [
-                    'id' => $driver->id,
-                    'name' => $driver->name,
+                    'first_name' => $driver->first_name,
+                    'last_name' => $driver->last_name,
                     'phone_number' => $driver->phone_number,
                 ],
             ],

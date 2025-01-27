@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Driver extends Model
 {
+    protected $guarded = ['id'];
+
     public function documents()
     {
         return $this->hasOne(DriverDocument::class);
